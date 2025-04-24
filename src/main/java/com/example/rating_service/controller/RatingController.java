@@ -47,4 +47,10 @@ public class RatingController {
         List<Rating> ratings = ratingService.getRatings();
         return ResponseEntity.ok(ratings);
     }
+
+    @GetMapping("/movie/{movieId}")
+    public ResponseEntity<List<Rating>> getRatingByMovieId(@PathVariable String movieId){
+        List<Rating> ratings = ratingService.getRatingByMovieId(movieId);
+        return ResponseEntity.ok(ratings);
+    }
 }

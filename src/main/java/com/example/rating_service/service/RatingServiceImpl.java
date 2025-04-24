@@ -1,4 +1,4 @@
-package com.example.rating_service.serviceImpl;
+package com.example.rating_service.service;
 
 import com.example.rating_service.dto.RatingDTO;
 import com.example.rating_service.exception.BadRequestException;
@@ -6,14 +6,24 @@ import com.example.rating_service.exception.NotFoundException;
 import com.example.rating_service.model.Rating;
 import com.example.rating_service.repository.RatingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Service
-public class RatingService implements com.example.rating_service.service.RatingService {
+public class RatingServiceImpl implements com.example.rating_service.service.RatingService {
+
     @Autowired
     private RatingRepository ratingRepository;
+
+    private final StreamBridge streamBridge;
+
+    public RatingServiceImpl(StreamBridge streamBridge) {
+        this.streamBridge = streamBridge;
+    }
     @Override
     public Rating createRating(String movieId, RatingDTO ratingDTO) {
         Rating rating = new Rating();
@@ -24,8 +34,9 @@ public class RatingService implements com.example.rating_service.service.RatingS
         rating.setMovieId(movieId);
         rating.setRatingStar(ratingDTO.getRatingStar());
         rating.setRatingContent(ratingDTO.getRatingContent());
-
-        return ratingRepository.save(rating);
+        ratingRepository.save(rating);
+        streamBridge.send("createRating-out-0", movieId);
+        return rating;
     }
 
     @Override
@@ -57,4 +68,25 @@ public class RatingService implements com.example.rating_service.service.RatingS
     public List<Rating> getRatings() {
         return ratingRepository.findAll();
     }
+
+    @Override
+    public List<Rating> getRatingByMovieId(String movieId) {
+
+        return ratingRepository.findBymovieId(movieId);
+    }
+
+    @Bean
+    public Consumer<String> createMovie() {
+        return movieString -> {
+            System.out.println("📥 Nhận message từ RabbitMQ: " + movieString);
+        };
+    }
+
+    @Bean
+    public Consumer<String> getMovie() {
+        return movieString -> {
+            System.out.println("📥 Nhận message từ RabbitMQ - get: " + movieString);
+        };
+    }
+
 }
