@@ -8,6 +8,7 @@ import com.example.rating_service.repository.RatingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,7 +36,8 @@ public class RatingServiceImpl implements com.example.rating_service.service.Rat
         rating.setRatingStar(ratingDTO.getRatingStar());
         rating.setRatingContent(ratingDTO.getRatingContent());
         ratingRepository.save(rating);
-        streamBridge.send("createRating-out-0", movieId);
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getCredentials());
+        streamBridge.send("createRating-out-0", movieId + " " + SecurityContextHolder.getContext().getAuthentication().getCredentials());
         return rating;
     }
 
